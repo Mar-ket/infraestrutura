@@ -1,0 +1,234 @@
+# Deployments
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: products
+  namespace: egs-mar-ket-place
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: products
+  template:
+    metadata:
+      labels:
+        app: products
+    spec:
+      containers:
+      - name: products
+        image: registry.deti:5000/mar_ket/produtos:v1
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8888
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: entities
+  namespace: egs-mar-ket-place
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: entities
+  template:
+    metadata:
+      labels:
+        app: entities
+    spec:
+      containers:
+      - name: entities
+        image: registry.deti:5000/mar_ket/entities:v1
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8888
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payments
+  namespace: egs-mar-ket-place
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payments
+  template:
+    metadata:
+      labels:
+        app: payments
+    spec:
+      containers:
+      - name: payments
+        image: registry.deti:5000/mar_ket/payments:v1
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: sales
+  namespace: egs-mar-ket-place
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sales
+  template:
+    metadata:
+      labels:
+        app: sales
+    spec:
+      containers:
+      - name: sales
+        image: registry.deti:5000/mar_ket/sales:v1
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 8888
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: authservice
+  namespace: egs-mar-ket-place
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: authservice
+  template:
+    metadata:
+      labels:
+        app: authservice
+    spec:
+      containers:
+      - name: authservice
+        image: registry.deti:5000/mar_ket/authservice:v1
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 5000
+        env:
+          - name: KONG_LOG_LEVEL
+            value: notice
+          - name: KONG_PROXY_LISTEN
+            value: 0.0.0.0:8000
+          - name: KONG_PROXY_LISTEN_SSL
+            value: 0.0.0.0:8443
+          - name: KONG_ADMIN_LISTEN
+            value: 0.0.0.0:8001
+          - name: KONG_DATABASE
+            value: postgres
+          - name: KONG_PG_USER
+            value: kong
+          - name: KONG_PG_PASSWORD
+            value: kongpass
+          - name: KONG_PG_HOST
+            value: kongdb
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kong-gateway
+  namespace: egs-mar-ket-place
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kong-gateway
+  template:
+    metadata:
+      labels:
+        app: kong-gateway
+    spec:
+      containers:
+      - name: kong-gateway
+        image: docker.io/kong/kong-gateway:3.2.1.0
+        resources:
+          requests:
+            memory: "32Mi"
+            cpu: "10m"
+          limits:
+            memory: "128Mi"
+            cpu: "500m"
+        ports:
+        - containerPort: 5005000
+---
+
+
+# Services
+--- 
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong-gateway-admin
+  namespace: egs-mar-ket-place
+spec:
+  ports:
+  - name: 
+    port: 8000
+    targetPort: 8000
+  selector:
+    app: kong-gateway-admin
+---
+
+
+
+
+
+# Routes
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: products-ingress
+  namespace: egs-mar-ket-place
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/frontend-entry-points: http
+    traefik.ingress.kubernetes.io/redirect-entry-point: http
+    traefik.ingress.kubernetes.io/redirect-permanent: "true"
+spec:
+  rules:
+  - host: maketplace.deti
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: products
+            port: 
+              name: cavalo
+---
