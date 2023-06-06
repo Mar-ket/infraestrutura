@@ -1,0 +1,104 @@
+# database for kong
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-kong-volume
+spec:
+  storageClassName: local-path
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /var/lib/postgresql-market-kongdb/data
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-kong-volume-claim
+spec:
+  storageClassName: local-path
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
+
+
+# database for ads
+#
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb-ads
+spec:
+  serviceName: mongodb-ads
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb-ads
+  template:
+    metadata:
+      labels:
+        app: mongodb-ads
+    spec:
+      containers:
+        - name: mongodb-ads
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongodb-data-ads
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+        name: mongodb-data-ads
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+---
+#
+# database for auth
+# database for parse
+
+# volume for entities
+
+# volume for products
+
+# database for sales
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: postgres-sales-volume
+spec:
+  storageClassName: local-path
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  hostPath:
+    path: /var/lib/postgresql-market-sales/data
+
+---
+
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: postgres-sales-volume-claim
+spec:
+  storageClassName: local-path
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+---
