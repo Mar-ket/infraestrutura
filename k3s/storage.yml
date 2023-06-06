@@ -67,8 +67,42 @@ spec:
 ---
 #
 # database for auth
-# database for parse
 
+# database for parse
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: mongodb-parse
+spec:
+  serviceName: mongodb-parse
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mongodb-parse
+  template:
+    metadata:
+      labels:
+        app: mongodb-parse
+    spec:
+      containers:
+        - name: mongodb-parse
+          image: mongo:latest
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongodb-data-parse
+              mountPath: /data/db
+  volumeClaimTemplates:
+    - metadata:
+        name: mongodb-data-parse
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 1Gi
+---
 # volume for entities
 
 # volume for products
