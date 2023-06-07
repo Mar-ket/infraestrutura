@@ -177,16 +177,47 @@ spec:
               value: parse
 ---
 
-apiVersion: v1
-kind: Service
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: mongodb-parse
+  name: parse-mongodb
 spec:
+  replicas: 1
   selector:
-    app: mongodb-parse
-  ports:
-    - protocol: TCP
-      port: 27017
+    matchLabels:
+      app: parse-mongodb
+  template:
+    metadata:
+      labels:
+        app: parse-mongodb
+    spec:
+      securityContext:
+        runAsUser: 1001
+      containers:
+        - name: parse-mongodb
+          image: bitnami/parse:latest
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-parse-volume
+              mountPath: /bitnami/mongodb
+      volumes:
+        - name: mongo-volume
+          persistentVolumeClaim:
+            claimName: mongo-parse-volume-claim
+          env:
+            - name: MONGODB_USERNAME
+              value: bn_parse
+            - name: MONGODB_DATABASE 
+              value: bitnami_parse
+            - name: MONGODB_PASSWORD 
+              value: bitnami123
+            - name: ALLOW_EMPTY_PASSWORD
+              value: yes
+            - name: PATH 
+              value: /opt/bitnami/mongodb/bin:/opt/bitnami/common/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+            - name: BITNAMI_APP_NAME 
+              value: mongodb
 ---
 apiVersion: v1
 kind: Service
@@ -248,13 +279,6 @@ spec:
           - containerPort: 8000
           - containerPort: 8443
           - containerPort: 8001
-        volumeMounts:
-          - name: postgres-kong-volume
-            mountPath: /var/lib/postgresql/data
-      volumes:
-        - name: postgres-volume
-          persistentVolumeClaim:
-            claimName: postgres-kong-volume-claim
 ---
 
 apiVersion: apps/v1
@@ -283,50 +307,84 @@ spec:
               value: kong
           ports:
             - containerPort: 5432
+          volumeMounts:
+            - name: postgres-kong-volume
+              mountPath: /var/lib/postgresql/data
+      volumes:
+        - name: postgres-volume
+          persistentVolumeClaim:
+            claimName: postgres-kong-volume-claim
 ---
 # ads deployment
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user_app
-  namespace: egs-mar-ket-place
+  name: ads
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
-      app: user_app
+      app: ads
   template:
     metadata:
       labels:
-        app: user_app
+        app: ads
     spec:
+      securityContext:
+        runAsUser: 1001
       containers:
-      - name: user_app
-        image: registry.deti:5000/mar_ket/user-app:v1
-        env:
-          - name: PORT
-            value: 3000
-        resources:
-          requests:
-            memory: "32Mi"
-            cpu: "10m"
-          limits:
-            memory: "128Mi"
-            cpu: "500m"
-        ports:
-        - containerPort: 3000
+        - name: ads
+          image: registry.deti:5000/mar_ket/ads:v1
+          ports:
+            - containerPort: 3000
+          env:
+            - name: PORT
+              value: 3000
+            - name: MONGODB_URI
+              value: 'mongodb://bn_parse:bitnami123@host:port/bitnami_parse'
 ---
-apiVersion: v1
-kind: Service
+apiVersion: apps/v1
+kind: Deployment
 metadata:
-  name: mongodb-ads
+  name: ads-mongodb
 spec:
+  replicas: 1
   selector:
-    app: mongodb-ads
-  ports:
-    - protocol: TCP
-      port: 27017
+    matchLabels:
+      app: ads-mongodb
+  template:
+    metadata:
+      labels:
+        app: ads-mongodb
+    spec:
+      securityContext:
+        runAsUser: 1001
+      containers:
+        - name: ads-mongodb
+          image: bitnami/parse:latest
+          ports:
+            - containerPort: 27017
+          volumeMounts:
+            - name: mongo-ads-volume
+              mountPath: /bitnami/mongodb
+          env:
+            - name: MONGODB_USERNAME
+              value: bn_parse
+            - name: MONGODB_DATABASE 
+              value: bitnami_parse
+            - name: MONGODB_PASSWORD 
+              value: bitnami123
+            - name: ALLOW_EMPTY_PASSWORD
+              value: yes
+            - name: PATH 
+              value: /opt/bitnami/mongodb/bin:/opt/bitnami/common/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+            - name: BITNAMI_APP_NAME 
+              value: mongodb
+      volumes:
+        - name: mongo-volume
+          persistentVolumeClaim:
+            claimName: mongo-ads-volume-claim
 ---
 apiVersion: v1
 kind: Service
@@ -334,7 +392,7 @@ metadata:
   name: mongodb-ads-service
 spec:
   selector:
-    app: mongodb-ads
+    app: ads-mongodb
   ports:
     - protocol: TCP
       port: 27017
@@ -362,10 +420,10 @@ spec:
         image: registry.deti:5000/mar_ket/user-app:v1
         resources:
           requests:
-            memory: "32Mi"
-            cpu: "10m"
+            memory: "512Mi"
+            cpu: "500m"
           limits:
-            memory: "128Mi"
+            memory: "1Gi"
             cpu: "500m"
         ports:
         - containerPort: 80
@@ -392,7 +450,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: kong-gateway-admin
+  name: kong-gateway-proxy
   namespace: egs-mar-ket-place
 spec:
   ports:
@@ -400,7 +458,20 @@ spec:
     port: 8000
     targetPort: 8000
   selector:
-    app: kong-gateway-admin
+    app: kong-gateway
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: kong-gateway-admin-api
+  namespace: egs-mar-ket-place
+spec:
+  ports:
+  - name: 
+    port: 8001
+    targetPort: 8001
+  selector:
+    app: kong-gateway
 ---
 
 
@@ -412,7 +483,7 @@ spec:
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: products-ingress
+  name: kong-proxy-ingress
   namespace: egs-mar-ket-place
   annotations:
     kubernetes.io/ingress.class: traefik
@@ -421,14 +492,36 @@ metadata:
     traefik.ingress.kubernetes.io/redirect-permanent: "true"
 spec:
   rules:
-  - host: maketplace.deti
+  - host: marketplace.deti
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: products
+            name: kong-gateway-proxy
             port: 
-              name: cavalo
+            number: 8000
 ---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: kong-admin-ingress
+  namespace: egs-mar-ket-place
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/frontend-entry-points: http
+    traefik.ingress.kubernetes.io/redirect-entry-point: http
+    traefik.ingress.kubernetes.io/redirect-permanent: "true"
+spec:
+  rules:
+  - host: marketplace.deti
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: kong-gateway-admin-api
+            port: 
+            number: 8001
