@@ -195,7 +195,7 @@ spec:
         runAsUser: 1001
       containers:
         - name: parse-mongodb
-          image: bitnami/parse:latest
+          image: bitnami/mongodb:5.0
           ports:
             - containerPort: 27017
           volumeMounts:
@@ -211,9 +211,9 @@ spec:
             - name: ALLOW_EMPTY_PASSWORD
               value: yes
             - name: PATH 
-              value: /opt/bitnami/mongodb/bin:/opt/bitnami/common/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              value: "/opt/bitnami/mongodb/bin:/opt/bitnami/common/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
             - name: BITNAMI_APP_NAME 
-              value: mongodb
+              value: "mongodb"
       volumes:
         - name: mongo-volume
           persistentVolumeClaim:
@@ -300,11 +300,11 @@ spec:
           image: postgres:13
           env:
             - name: POSTGRES_USER
-              value: kong
+              value: "kong"
             - name: POSTGRES_PASSWORD
-              value: kongpass
+              value: "kongpass"
             - name: POSTGRES_DB
-              value: kong
+              value: "kong"
           ports:
             - containerPort: 5432
           volumeMounts:
@@ -340,9 +340,9 @@ spec:
             - containerPort: 3000
           env:
             - name: PORT
-              value: 3000
+              value: "3000"
             - name: MONGODB_URI
-              value: mongodb://bn_parse:bitnami123@host:port/bitnami_parse
+              value: "mongodb://bn_parse:bitnami123@host:port/bitnami_parse"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -362,29 +362,29 @@ spec:
         runAsUser: 1001
       containers:
         - name: ads-mongodb
-          image: bitnami/parse:latest
+          image: bitnami/mongodb:5.0
           ports:
             - containerPort: 27017
           volumeMounts:
-            - name: mongo-ads-volume
+            - name: mongodb-ads-volume
               mountPath: /bitnami/mongodb
           env:
             - name: MONGODB_USERNAME
-              value: bn_parse
+              value: "bn_parse"
             - name: MONGODB_DATABASE 
-              value: bitnami_parse
+              value: "bitnami_parse"
             - name: MONGODB_PASSWORD 
-              value: bitnami123
+              value: "bitnami123"
             - name: ALLOW_EMPTY_PASSWORD
-              value: yes
+              value: "yes"
             - name: PATH 
-              value: /opt/bitnami/mongodb/bin:/opt/bitnami/common/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              value: "/opt/bitnami/mongodb/bin:/opt/bitnami/common/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
             - name: BITNAMI_APP_NAME 
-              value: mongodb
+              value: "mongodb"
       volumes:
-        - name: mongo-volume
+        - name: mongo-ads-volume
           persistentVolumeClaim:
-            claimName: mongo-ads-volume-claim
+            claimName: mongo-data-ads
 ---
 apiVersion: v1
 kind: Service
