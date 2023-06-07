@@ -162,19 +162,19 @@ spec:
             - containerPort: 1337
           env:
             - name: PARSE_DATABASE_NAME 
-              value: bitnami_parse
+              value: "bitnami_parse"
             - name: PARSE_DATABASE_PASSWORD
-              value: bitnami123
+              value: "bitnami123"
             - name: PARSE_DATABASE_HOST
-              value: mongodb
+              value: "mongodb"
             - name: PARSE_DATABASE_PORT_NUMBER
               value: 27017
             - name: PARSE_DATABASE_USER
-              value: bn_parse
+              value: "bn_parse"
             - name: PATH
-              value: /opt/bitnami/python/bin:/opt/bitnami/node/bin:/opt/bitnami/mongodb/bin:/opt/bitnami/parse/bin:/opt/bitnami/common/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+              value: "/opt/bitnami/python/bin:/opt/bitnami/node/bin:/opt/bitnami/mongodb/bin:/opt/bitnami/parse/bin:/opt/bitnami/common/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
             - name: BITNAMI_APP_NAME
-              value: parse
+              value: "parse"
 ---
 
 apiVersion: apps/v1
@@ -201,23 +201,23 @@ spec:
           volumeMounts:
             - name: mongo-parse-volume
               mountPath: /bitnami/mongodb
-      volumes:
-        - name: mongo-volume
-          persistentVolumeClaim:
-            claimName: mongo-parse-volume-claim
           env:
             - name: MONGODB_USERNAME
-              value: bn_parse
+              value: "bn_parse"
             - name: MONGODB_DATABASE 
-              value: bitnami_parse
+              value: "bitnami_parse"
             - name: MONGODB_PASSWORD 
-              value: bitnami123
+              value: "bitnami123"
             - name: ALLOW_EMPTY_PASSWORD
               value: yes
             - name: PATH 
               value: /opt/bitnami/mongodb/bin:/opt/bitnami/common/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
             - name: BITNAMI_APP_NAME 
               value: mongodb
+      volumes:
+        - name: mongo-volume
+          persistentVolumeClaim:
+            claimName: mongo-parse-volume-claim
 ---
 apiVersion: v1
 kind: Service
@@ -311,7 +311,7 @@ spec:
             - name: postgres-kong-volume
               mountPath: /var/lib/postgresql/data
       volumes:
-        - name: postgres-volume
+        - name: postgres-kong-volume
           persistentVolumeClaim:
             claimName: postgres-kong-volume-claim
 ---
@@ -342,7 +342,7 @@ spec:
             - name: PORT
               value: 3000
             - name: MONGODB_URI
-              value: 'mongodb://bn_parse:bitnami123@host:port/bitnami_parse'
+              value: mongodb://bn_parse:bitnami123@host:port/bitnami_parse
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -403,21 +403,21 @@ spec:
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: user_app
+  name: userapp
   namespace: egs-mar-ket-place
 spec:
   replicas: 3
   selector:
     matchLabels:
-      app: user_app
+      app: userapp
   template:
     metadata:
       labels:
-        app: user_app
+        app: userapp
     spec:
       containers:
-      - name: user_app
-        image: registry.deti:5000/mar_ket/user-app:v1
+      - name: userapp
+        image: registry.deti:5000/mar_ket/userapp:v3
         resources:
           requests:
             memory: "512Mi"
@@ -501,7 +501,7 @@ spec:
           service:
             name: kong-gateway-proxy
             port: 
-            number: 8000
+              number: 8000
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -524,4 +524,4 @@ spec:
           service:
             name: kong-gateway-admin-api
             port: 
-            number: 8001
+              number: 8001
