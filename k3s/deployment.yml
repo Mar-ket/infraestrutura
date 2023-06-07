@@ -168,7 +168,7 @@ spec:
             - name: PARSE_DATABASE_HOST
               value: "mongodb"
             - name: PARSE_DATABASE_PORT_NUMBER
-              value: 27017
+              value: "27017"
             - name: PARSE_DATABASE_USER
               value: "bn_parse"
             - name: PATH
@@ -259,21 +259,21 @@ spec:
             cpu: "500m"
         env:
           - name: KONG_LOG_LEVEL
-            value: notice
+            value: "notice"
           - name: KONG_PROXY_LISTEN
-            value: 0.0.0.0:8000
+            value: "0.0.0.0:8000"
           - name: KONG_PROXY_LISTEN_SSL
-            value: 0.0.0.0:8443
+            value: "0.0.0.0:8443"
           - name: KONG_ADMIN_LISTEN
-            value: 0.0.0.0:8001
+            value: "0.0.0.0:8001"
           - name: KONG_DATABASE
-            value: postgres
+            value: "postgres"
           - name: KONG_PG_USER
-            value: kong
+            value: "kong"
           - name: KONG_PG_PASSWORD
-            value: kongpass
+            value: "kongpass"
           - name: KONG_PG_HOST
-            value: kongdb
+            value: "kongdb"
 
         ports:
           - containerPort: 8000
