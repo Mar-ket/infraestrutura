@@ -3,6 +3,7 @@
 apiVersion: v1
 kind: PersistentVolume
 metadata:
+  namespace: egs-mar-ket-place
   name: postgres-kong-volume
 spec:
   storageClassName: local-path
@@ -19,6 +20,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-kong-volume-claim
+  namespace: egs-mar-ket-place
 spec:
   storageClassName: local-path
   accessModes:
@@ -32,80 +34,39 @@ spec:
 # database for ads
 #
 ---
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: mongodb-ads
-spec:
-  serviceName: mongodb-ads
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mongodb-ads
-  template:
-    metadata:
-      labels:
-        app: mongodb-ads
-    spec:
-      containers:
-        - name: mongodb-ads
-          image: mongo:latest
-          ports:
-            - containerPort: 27017
-          volumeMounts:
-            - name: mongodb-data-ads
-              mountPath: /data/db
-  volumeClaimTemplates:
-    - metadata:
-        name: mongodb-data-ads
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 1Gi
 ---
 #
 # database for auth
 
 # database for parse
 ---
-apiVersion: apps/v1
-kind: StatefulSet
-metadata:
-  name: mongodb-parse
-spec:
-  serviceName: mongodb-parse
-  replicas: 1
-  selector:
-    matchLabels:
-      app: mongodb-parse
-  template:
-    metadata:
-      labels:
-        app: mongodb-parse
-    spec:
-      containers:
-        - name: mongodb-parse
-          image: mongo:latest
-          ports:
-            - containerPort: 27017
-          volumeMounts:
-            - name: mongodb-data-parse
-              mountPath: /data/db
-  volumeClaimTemplates:
-    - metadata:
-        name: mongodb-data-parse
-      spec:
-        accessModes:
-          - ReadWriteOnce
-        resources:
-          requests:
-            storage: 1Gi
 ---
 # volume for entities
-
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: longhorn-entities-volume-claim
+  namespace: egs-mar-ket-place
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: longhorn
 # volume for products
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: longhorn-product-volume-claim
+  namespace: egs-mar-ket-place
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 2Gi
+  storageClassName: longhorn
 
 # database for sales
 ---
@@ -113,10 +74,11 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: postgres-sales-volume
+  namespace: egs-mar-ket-place
 spec:
   storageClassName: local-path
   capacity:
-    storage: 1Gi
+    storage: 2Gi
   accessModes:
     - ReadWriteOnce
   hostPath:
@@ -128,6 +90,7 @@ apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: postgres-sales-volume-claim
+  namespace: egs-mar-ket-place
 spec:
   storageClassName: local-path
   accessModes:
