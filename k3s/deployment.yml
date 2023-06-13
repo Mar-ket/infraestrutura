@@ -411,7 +411,7 @@ spec:
         runAsUser: 1001
       containers:
         - name: ads
-          image: registry.deti:5000/mar_ket/ads:v1
+          image: registry.deti:5000/mar_ket/ads
           ports:
             - containerPort: 3000
           env:
@@ -419,6 +419,8 @@ spec:
               value: "3000"
             - name: MONGODB_URI
               value: "mongodb://bn_parse:bitnami123@mongodb-ads-service:27017/bitnami_parse"
+            - name: ADS_URI
+              value: "http://ads-service:3000"
 ---
 apiVersion: apps/v1
 kind: StatefulSet
@@ -481,7 +483,7 @@ spec:
     spec:
       containers:
       - name: userapp
-        image: registry.deti:5000/mar_ket/userapp:v1
+        image: registry.deti:5000/mar_ket/userapp:latest
         resources:
           requests:
             memory: "512Mi"
@@ -507,7 +509,7 @@ metadata:
   name: konga-dashboard
   namespace: egs-mar-ket-place
 spec:
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: konga-dashboard
@@ -806,10 +808,67 @@ spec:
   selector:
     app: kong-gateway
 
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: userapp-service
+  namespace: egs-mar-ket-place
+spec:
+  ports:
+  - name: 
+    port: 80
+    targetPort: 80
+  selector:
+    app: userapp
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nginx-ingress
+  namespace: egs-mar-ket-place
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/frontend-entry-points: http
+    traefik.ingress.kubernetes.io/redirect-entry-point: http
+    traefik.ingress.kubernetes.io/redirect-permanent: "true"
+spec:
+  rules:
+    - host: marketplace.deti
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: userapp-service
+                port:
+                  number: 80
 
+---
 
-
-
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: konga-ingress
+  namespace: egs-mar-ket-place
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/frontend-entry-points: http
+    traefik.ingress.kubernetes.io/redirect-entry-point: http
+    traefik.ingress.kubernetes.io/redirect-permanent: "true"
+spec:
+  rules:
+    - host: marketplace.konga.deti
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: konga-service
+                port:
+                  number: 1337
 # Routes
 ---
 
