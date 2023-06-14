@@ -21,6 +21,17 @@ services:
     volumes:
       - authservice_mongodb_data:/bitnami/mongodb
 
+  ads-service:
+    image: registry.deti:5000/mar_ket/ads:v2
+    build: ../servicos/ads
+    environment:
+      - "MONGODB_URI=mongodb://bn_parse:bitnami123@mongodb:27017/bitnami_parse"
+      - "PORT=3000"
+    expose:
+      - 3000:3000
+    networks:
+      - "kong-net"
+
   parse-dashboard:
     command:
       - "/opt/bitnami/scripts/parse-dashboard/run.sh"
@@ -66,7 +77,7 @@ services:
 
   entities-kong1:
     container_name: "entities-kong1"
-    build: ./broth2/EGS/entities/
+    build: ../servicos/entities/
     environment:
       - "FLASK_APP=server"
       - "FLASK_ENV=production"
@@ -204,7 +215,7 @@ services:
       - authservice_parse_data:/bitnami/parse
   payments:
     container_name: "payments"
-    build: ./gil/mect-egs-payments/
+    build: ../servicos/mect-egs-payments
     environment:
       - "PATH=/usr/local/openjdk-11/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
       - "JAVA_HOME=/usr/local/openjdk-11"
@@ -226,7 +237,7 @@ services:
       - "python3"
       - "app.py"
     container_name: "produtos-kong-net"
-    build: ./broth2/EGS/products/
+    build: ../servicos/products
     environment:
       - "FLASK_APP=server"
       - "FLASK_ENV=production"
@@ -273,7 +284,7 @@ services:
   sales:
     container_name: "sales"
     hostname: "sales"
-    build: ./gil/mect-egs-sales/
+    build: ../servicos/mect-egs-sales/
     command: python /opt/app/manage.py runserver 0.0.0.0:8000
     environment:
       - "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -293,7 +304,7 @@ services:
 
   authservice:
     container_name: "authservice"
-    build: ./authservice-readable/
+    build: ../servicos/authservice-readable/
     environment:
       - "FLASK_APP=server"
       - "FLASK_ENV=production"
