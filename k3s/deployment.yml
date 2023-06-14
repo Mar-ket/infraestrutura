@@ -90,10 +90,10 @@ spec:
         image: registry.deti:5000/mar_ket/payments:v1
         resources:
           requests:
-            memory: "32Mi"
+            memory: "512Mi"
             cpu: "10m"
           limits:
-            memory: "128Mi"
+            memory: "1Gi"
             cpu: "500m"
         ports:
         - containerPort: 8081
@@ -162,7 +162,7 @@ spec:
             cpu: "500m"
         ports:
         - containerPort: 8888
-        command: ["python","/opt/app/manage.py","runserver","0.0.0.0:8000"]
+        command: ["python","/opt/app/manage.py","runserver","0.0.0.0:8888"]
         env:
           - name: DB_NAME
             value: "sales_api"
@@ -177,7 +177,7 @@ spec:
           - name: DEFAULT_CURRENCY
             value: "EUR"
           - name: PAYMENTS_API_URL
-            value: "http://payments-service:8081/payments"
+            value: "http://payments-service:8081"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -210,18 +210,26 @@ spec:
           - name: auth-jwt-secret
             mountPath: "/tmp/secrets/auth-jwt-secret"
             readOnly: true
+          - name: auth-jwt-kid
+            mountPath: "/tmp/secrets/auth-jwt-kid"
+            readOnly: true
           - name: auth-app-secret
             mountPath: "/tmp/secrets/auth-app-secret"
             readOnly: true
         env:
           - name: REDIS_CN_STRING
-            value: "redis://:@redis-db-service:6379/0"
+            value: "redis://:@redis:6379"
           - name: PARSE
             value: "http://parse-service:1337"
       volumes:
         - name: auth-app-secret
           secret:
             secretName: auth-app-secret
+
+        - name: auth-jwt-kid
+          secret:
+            secretName: auth-jwt-kid
+
         - name: auth-jwt-secret
           secret:
             secretName: auth-jwt-secret
@@ -895,6 +903,29 @@ spec:
             name: kong-gateway-proxy
             port: 
               number: 8000
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: auth-service-expose
+  namespace: egs-mar-ket-place
+  annotations:
+    kubernetes.io/ingress.class: traefik
+    traefik.ingress.kubernetes.io/frontend-entry-points: http
+    traefik.ingress.kubernetes.io/redirect-entry-point: http
+    traefik.ingress.kubernetes.io/redirect-permanent: "true"
+spec:
+  rules:
+  - host: marketplace.auth.deti
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: auth-service
+            port: 
+              number: 5001
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
